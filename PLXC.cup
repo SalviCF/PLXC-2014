@@ -259,4 +259,14 @@ declaration		::= INT ID:id
 						{:
 							Token t = tokens_table.add(id, "int");
 						:}		
+				|	INT ID:id ASIG expr:e
+						{:
+							PLXC.out.println("\t" + id + " = " + e + ";");
+							Token t = tokens_table.add(id, "int");
+						:}
+				|	declaration COMMA ID:id ASIG expr:e
+						{:
+							PLXC.out.println("\t" + id + " = " + e + ";");
+							Token t = tokens_table.add(id, "int");
+						:}
 ;
