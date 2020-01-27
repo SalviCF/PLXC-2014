@@ -4,6 +4,7 @@ import java.util.*;
 action code	{:
 				/* Variables */
 				public static int varTemp = 0;
+				public static LabelPair auxLabelPair;
 
 				/* Methods */
 				private static String newVarTemp() {
@@ -119,7 +120,7 @@ action code	{:
 // TERMINALS
 
 terminal INT;
-terminal PRINT, ELSE, WHILE, DO, FOR; 
+terminal PRINT, ELSE, WHILE, DO, FOR, TO, DOWNTO, STEP; 
 terminal String IF;
 terminal OP, CP, OB, CB;
 terminal ADD, SUB, MUL, DIV, UMIN, SC, ASIG, COMMA, INCR, DECR, MOD;
@@ -128,7 +129,7 @@ terminal String NUM, ID;
 
 // NON TERMINALS
 
-non terminal Object program, sent_list, sentence, optionalElse;
+non terminal Object program, sent_list, sentence, optionalElse, optionalStep;
 non terminal String expr;
 non terminal Token declaration;
 non terminal LabelPair cond;
@@ -218,10 +219,81 @@ sentence		::= expr:e SC
 							PLXC.out.println(c.getLabelFalse() + ":"); 
 						:}
 				|	declaration SC
+				|	FOR:labIniFor ID:id ASIG expr:ini TO 
+						{:
+							if (Scopes.find(id, true) != null){
+								String var_name = Scopes.getVariable(id);
+								PLXC.out.println("\t" + var_name + " = " + ini + ";"); 
+							} else {
+								Scopes.error();
+							} 
+						:}
+					expr:end 
+						{:
+							PLXC.out.println(labIniFor + ":");
+							auxLabelPair = genCondition(end, id, " < ", true);
+							String labIncrFor = Yylex.newLabel();
+							PLXC.out.println(labIniFor + "_" + ":");
+						:}
+					optionalStep:os
+						{:
+							if (os != null){
+								PLXC.out.println("\t" + id + " = " + id + " + " + os + ";");
+							} else {
+								PLXC.out.println("\t" + id + " = " + id + " + 1;");
+							} 
+							PLXC.out.println("\tgoto " + labIniFor + ";"); 
+							PLXC.out.println(auxLabelPair.getLabelTrue() + ":"); 
+						:}
+					DO OB sentence 
+						{:
+							PLXC.out.println("\tgoto " + labIniFor + "_" + ";"); 
+							PLXC.out.println(auxLabelPair.getLabelFalse() + ":"); 
+						:}
+					CB 
+				|	FOR:labIniFor ID:id ASIG expr:ini DOWNTO 
+						{:
+							if (Scopes.find(id, true) != null){
+								String var_name = Scopes.getVariable(id);
+								PLXC.out.println("\t" + var_name + " = " + ini + ";"); 
+							} else {
+								Scopes.error();
+							}
+						:}
+					expr:end 
+						{: 
+							PLXC.out.println(labIniFor + ":");
+							auxLabelPair = genCondition(id, end, " < ", true);
+							String labIncrFor = Yylex.newLabel();
+							PLXC.out.println(labIniFor + "_" + ":");
+						:} 
+					optionalStep:os
+						{:
+							if (os != null){
+								PLXC.out.println("\t" + id + " = " + id + " - " + os + ";");
+							} else {
+								PLXC.out.println("\t" + id + " = " + id + " - 1;");
+							}
+							PLXC.out.println("\tgoto " + labIniFor + ";"); 
+							PLXC.out.println(auxLabelPair.getLabelTrue() + ":"); 
+						:}
+					DO OB sentence 
+						{:
+							PLXC.out.println("\tgoto " + labIniFor + "_" + ";"); 
+							PLXC.out.println(auxLabelPair.getLabelFalse() + ":"); 
+						:}
+					CB 
 ;
 
 optionalElse	::= ELSE sentence
-				| /*epsilon*/
+				| /* epsilon */
+;
+
+optionalStep	::= STEP expr:e
+						{:
+							RESULT = e;
+						:}
+				| /* epsilon */
 ;
 
 
@@ -274,26 +346,30 @@ expr			::= expr:e1 ADD expr:e2
 						:}
 				|	INCR ID:id
 						{:
-							PLXC.out.println("\t" + id + " = " + id + " + 1" + ";"); 
-							RESULT = id;
+							String newName = Scopes.getVariable(id);
+							PLXC.out.println("\t" + newName + " = " + newName + " + 1" + ";"); 
+							RESULT = newName;
 						:}
 				|	ID:id INCR
 						{:
 							String temp = newVarTemp();
-							PLXC.out.println("\t" + temp + " = " + id + ";"); 
-							PLXC.out.println("\t" + id + " = " + id + " + 1" + ";"); 
+							String newName = Scopes.getVariable(id);
+							PLXC.out.println("\t" + temp + " = " + newName + ";"); 
+							PLXC.out.println("\t" + newName + " = " + newName + " + 1" + ";"); 
 							RESULT = temp;
 						:}
 				|	DECR ID:id
 						{:
-							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
-							RESULT = id;
+							String newName = Scopes.getVariable(id);
+							PLXC.out.println("\t" + newName + " = " + newName + " - 1" + ";"); 
+							RESULT = newName;
 						:}
 				|	ID:id DECR
 						{:
 							String temp = newVarTemp();
-							PLXC.out.println("\t" + temp + " = " + id + ";"); 
-							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
+							String newName = Scopes.getVariable(id);
+							PLXC.out.println("\t" + temp + " = " + newName + ";"); 
+							PLXC.out.println("\t" + newName + " = " + newName + " - 1" + ";"); 
 							RESULT = temp;
 						:}
 				|	OP ID:id CP INCR	

@@ -23,7 +23,9 @@ Identifier = [_a-z][_a-z0-9]*
 "do"                { return new Symbol(sym.DO, newLabel()); }
 "for"               { return new Symbol(sym.FOR, newLabel()); }
 "int"               { return new Symbol(sym.INT); }
-
+"to"                { return new Symbol(sym.TO); }
+"downto"            { return new Symbol(sym.DOWNTO); }
+"step"              { return new Symbol(sym.STEP); }
 
 // PARENTHESIS
 
