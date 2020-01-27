@@ -122,7 +122,7 @@ terminal INT;
 terminal PRINT, ELSE, WHILE, DO, FOR; 
 terminal String IF;
 terminal OP, CP, OB, CB;
-terminal ADD, SUB, MUL, DIV, UMIN, SC, ASIG, COMMA, INCR, DECR;
+terminal ADD, SUB, MUL, DIV, UMIN, SC, ASIG, COMMA, INCR, DECR, MOD;
 terminal DEQ, LT, LEQ, GT, GEQ, NEQ, AND, OR, NOT;
 terminal String NUM, ID;
 
@@ -139,7 +139,7 @@ precedence left OR;
 precedence left AND;
 precedence right NOT;
 precedence left ADD, SUB;
-precedence left DIV, MUL;
+precedence left DIV, MUL, MOD;
 precedence right UMIN;
 precedence left ELSE;
 precedence left OP, CP;
@@ -320,6 +320,12 @@ expr			::= expr:e1 ADD expr:e2
 							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
 							RESULT = id;	
 						:}
+				|	expr:e1 MOD expr:e2
+						{:
+							String temp1 = genTAC(" = " + e1 + " / " + e2 + ";");
+							String temp2 = genTAC(" = " + temp1 + " * " + e2 + ";");
+							RESULT = genTAC(" = " + e1 + " - " + temp2 + ";");
+						:}	
 ;
 
 cond			::= expr:e1 DEQ expr:e2
