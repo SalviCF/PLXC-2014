@@ -1,9 +1,9 @@
 import java_cup.runtime.*;
+import java.util.*;
 
 action code	{:
 				/* Variables */
 				public static int varTemp = 0;
-				private TokensTable tokens_table = new TokensTable();
 
 				/* Methods */
 				private static String newVarTemp() {
@@ -53,6 +53,67 @@ action code	{:
 					}
 				}
 
+				//
+
+				public static class Scopes {
+					private static ArrayList<TokensTable> scopes = new ArrayList<TokensTable>();
+
+					public static void newScope(){
+						scopes.add(new TokensTable());
+					}
+
+					public static void removeScope(){
+						scopes.remove(scopes.size() - 1);
+					}
+					
+					public static TokensTable currentScope(){
+						return scopes.get(scopes.size() - 1);
+					}
+
+					public static Token find(String name, Boolean current){
+						Token t = null;
+						int i = scopes.size() - 1; // by default, search in all scopes
+						if (!current) i--; // for searching excluding the current scope
+						while (i >= 0){
+							t = scopes.get(i).extract(name);
+							if (t != null) return t;
+							i--;
+						}
+						return t;
+					}
+
+					public static void declare(String id, String e, Boolean print){
+						if (currentScope().extract(id) != null) { 
+							error(); // redeclaring in the same scope
+						} else {
+							if (find(id, true) != null){ 
+								id = id + "_" + scopes.size();
+								currentScope().add(id, "int");
+							} else {
+								currentScope().add(id, "int");
+							}
+						}
+						if (print) PLXC.out.println("\t" + id + " = " + e + ";");
+					}
+
+					public static void error() {
+						System.out.println("\terror;");
+					}
+
+					public static String getVariable(String id){
+					String lastName = id + "_";
+					int idxLastScope = scopes.size()-1;
+
+					// Searching id_currentScope, id_currentScope-1, id_currentScope-2 ...
+					for (int i = idxLastScope; i >= 0; i--){
+						if (scopes.get(i).extract(lastName + (i+1)) != null)
+							return (lastName + (i+1)); // redeclaration
+					}
+					return id;
+				}
+
+				}
+
 			:}
 
 // TERMINALS
@@ -67,7 +128,7 @@ terminal String NUM, ID;
 
 // NON TERMINALS
 
-non terminal Object sent_list, sentence, optionalElse;
+non terminal Object program, sent_list, sentence, optionalElse;
 non terminal String expr;
 non terminal Token declaration;
 non terminal LabelPair cond;
@@ -83,6 +144,9 @@ precedence right UMIN;
 precedence left ELSE;
 
 // GRAMMAR
+
+program			::=	{: Scopes.newScope(); :} sent_list
+; 
 
 sent_list		::= sentence
 				| 	sent_list sentence	
@@ -109,7 +173,7 @@ sentence		::= expr:e SC
 						{:
 							PLXC.out.println(labEnd + ":"); 
 						:}
-				| 	OB sent_list CB
+				| 	OB {: Scopes.newScope(); :} sent_list CB {: Scopes.removeScope(); :}
 				|   WHILE:labIniWhile 
 						{:
 							PLXC.out.println(labIniWhile + ":");
@@ -186,8 +250,12 @@ expr			::= expr:e1 ADD expr:e2
 						:} %prec UMIN
 				| 	ID:id	
 						{: 
-							Token t = tokens_table.extract(id);  
-							RESULT = (t != null) ? t.getName() : null;
+							if (Scopes.find(id, true) != null){
+								RESULT = Scopes.getVariable(id);
+							} else {
+								Scopes.error();
+								RESULT = null;
+							}
 						:}
 				| 	NUM:num	
 						{: 
@@ -195,8 +263,13 @@ expr			::= expr:e1 ADD expr:e2
 						:}
 				|	ID:id ASIG expr:e 
 						{:
-							PLXC.out.println("\t" + id + " = " + e + ";");
-							RESULT = id;
+							if (Scopes.find(id, true) != null){
+								String var_name = Scopes.getVariable(id);
+								PLXC.out.println("\t" + var_name + " = " + e + ";"); 
+								RESULT = var_name;
+							} else {
+								Scopes.error();
+							}
 						:}
 ;
 
@@ -253,20 +326,18 @@ cond			::= expr:e1 DEQ expr:e2
 
 declaration		::= INT ID:id 
 						{:
-							Token t = tokens_table.add(id, "int");
+							Scopes.declare(id, "0", false);
 						:}
 				|	declaration COMMA ID:id 
 						{:
-							Token t = tokens_table.add(id, "int");
+							Scopes.declare(id, "0", false);
 						:}		
 				|	INT ID:id ASIG expr:e
 						{:
-							PLXC.out.println("\t" + id + " = " + e + ";");
-							Token t = tokens_table.add(id, "int");
+							Scopes.declare(id, e, true);
 						:}
 				|	declaration COMMA ID:id ASIG expr:e
 						{:
-							PLXC.out.println("\t" + id + " = " + e + ";");
-							Token t = tokens_table.add(id, "int");
+							Scopes.declare(id, e, true);
 						:}
 ;
