@@ -40,6 +40,8 @@ Identifier = [_a-z][_a-z0-9]*
 "*"                 { return new Symbol(sym.MUL); }                        
 "/"                 { return new Symbol(sym.DIV); }
 "="                 { return new Symbol(sym.ASIG); }
+"++"                { return new Symbol(sym.INCR); }
+"--"                { return new Symbol(sym.DECR); }
 
 ";"					{ return new Symbol(sym.SC); }
 ","                 { return new Symbol(sym.COMMA); }

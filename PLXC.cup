@@ -122,7 +122,7 @@ terminal INT;
 terminal PRINT, ELSE, WHILE, DO, FOR; 
 terminal String IF;
 terminal OP, CP, OB, CB;
-terminal ADD, SUB, MUL, DIV, UMIN, SC, ASIG, COMMA;
+terminal ADD, SUB, MUL, DIV, UMIN, SC, ASIG, COMMA, INCR, DECR;
 terminal DEQ, LT, LEQ, GT, GEQ, NEQ, AND, OR, NOT;
 terminal String NUM, ID;
 
@@ -142,6 +142,7 @@ precedence left ADD, SUB;
 precedence left DIV, MUL;
 precedence right UMIN;
 precedence left ELSE;
+precedence left OP, CP;
 
 // GRAMMAR
 
@@ -270,6 +271,54 @@ expr			::= expr:e1 ADD expr:e2
 							} else {
 								Scopes.error();
 							}
+						:}
+				|	INCR ID:id
+						{:
+							PLXC.out.println("\t" + id + " = " + id + " + 1" + ";"); 
+							RESULT = id;
+						:}
+				|	ID:id INCR
+						{:
+							String temp = newVarTemp();
+							PLXC.out.println("\t" + temp + " = " + id + ";"); 
+							PLXC.out.println("\t" + id + " = " + id + " + 1" + ";"); 
+							RESULT = temp;
+						:}
+				|	DECR ID:id
+						{:
+							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
+							RESULT = id;
+						:}
+				|	ID:id DECR
+						{:
+							String temp = newVarTemp();
+							PLXC.out.println("\t" + temp + " = " + id + ";"); 
+							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
+							RESULT = temp;
+						:}
+				|	OP ID:id CP INCR	
+						{: 
+							String temp = newVarTemp();
+							PLXC.out.println("\t" + temp + " = " + id + ";"); 
+							PLXC.out.println("\t" + id + " = " + id + " + 1" + ";"); 
+							RESULT = temp;	
+						:}
+				|	OP ID:id CP DECR	
+						{: 
+							String temp = newVarTemp();
+							PLXC.out.println("\t" + temp + " = " + id + ";"); 
+							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
+							RESULT = temp;	
+						:}
+				|	INCR OP ID:id CP	
+						{: 
+							PLXC.out.println("\t" + id + " = " + id + " + 1" + ";"); 
+							RESULT = id;	
+						:}
+				|	DECR OP ID:id CP	
+						{: 
+							PLXC.out.println("\t" + id + " = " + id + " - 1" + ";"); 
+							RESULT = id;	
 						:}
 ;
 
