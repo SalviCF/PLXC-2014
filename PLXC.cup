@@ -245,12 +245,11 @@ sentence		::= expr:e SC
 							PLXC.out.println("\tgoto " + labIniFor + ";"); 
 							PLXC.out.println(auxLabelPair.getLabelTrue() + ":"); 
 						:}
-					DO OB sentence 
+					DO sentence 
 						{:
 							PLXC.out.println("\tgoto " + labIniFor + "_" + ";"); 
 							PLXC.out.println(auxLabelPair.getLabelFalse() + ":"); 
 						:}
-					CB 
 				|	FOR:labIniFor ID:id ASIG expr:ini DOWNTO 
 						{:
 							if (Scopes.find(id, true) != null){
@@ -277,12 +276,11 @@ sentence		::= expr:e SC
 							PLXC.out.println("\tgoto " + labIniFor + ";"); 
 							PLXC.out.println(auxLabelPair.getLabelTrue() + ":"); 
 						:}
-					DO OB sentence 
+					DO sentence 
 						{:
 							PLXC.out.println("\tgoto " + labIniFor + "_" + ";"); 
 							PLXC.out.println(auxLabelPair.getLabelFalse() + ":"); 
 						:}
-					CB 
 ;
 
 optionalElse	::= ELSE sentence
