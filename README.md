@@ -1,1 +1,1 @@
-C-like mini compiler using JFlex and CUP
+C-like mini compiler using JFlex and CUP built on top of PLC-base repository
